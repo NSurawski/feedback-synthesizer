@@ -1,6 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { AnalysisReport, FeedbackEntry, Theme, FeatureRequest } from './types';
 
+// Model tiering: use cheaper/faster Haiku for simple parsing tasks,
+// Sonnet for complex reasoning (clustering, scoring, synthesis)
+const MODEL_FAST = 'claude-haiku-4-5-20251001';
+const MODEL_SMART = 'claude-sonnet-4-20250514';
+
 function createClient(apiKey: string): Anthropic {
   return new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
 }
@@ -20,17 +25,20 @@ export async function runPipeline(
   onStep('clustering');
   const clustered = await classifyAndCluster(client, entries);
 
-  // Step 3: Score & Rank
+  // Steps 3 & 4 run in parallel — they both depend on step 2 but not each other
   onStep('scoring');
-  const scored = await scoreAndRank(client, clustered);
+  const [scored, extractResult] = await Promise.all([
+    scoreAndRank(client, clustered),
+    extractQuotesAndRequests(client, clustered.entries),
+  ]);
 
-  // Step 4: Extract & Attribute
+  // Merge quotes from step 4 into scored themes from step 3
   onStep('extracting');
-  const extracted = await extractQuotesAndRequests(client, scored, clustered.entries);
+  const mergedThemes = mergeQuotesIntoThemes(scored, extractResult.themeQuotes);
 
   // Step 5: Synthesize
   onStep('synthesizing');
-  const report = await synthesize(client, extracted);
+  const report = await synthesize(client, { themes: mergedThemes, featureRequests: extractResult.featureRequests });
 
   onStep('complete');
   return report;
@@ -41,7 +49,7 @@ async function ingestAndClean(
   rawText: string
 ): Promise<string[]> {
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: MODEL_FAST,
     max_tokens: 4096,
     messages: [
       {
@@ -76,7 +84,7 @@ async function classifyAndCluster(
   entries: string[]
 ): Promise<{ entries: FeedbackEntry[]; themeNames: string[] }> {
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: MODEL_SMART,
     max_tokens: 4096,
     messages: [
       {
@@ -143,7 +151,7 @@ async function scoreAndRank(
 
   // Use AI to score actionability
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: MODEL_SMART,
     max_tokens: 2048,
     messages: [
       {
@@ -196,11 +204,19 @@ Return ONLY the JSON, no other text.`,
 
 async function extractQuotesAndRequests(
   client: Anthropic,
-  themes: Theme[],
   allEntries: FeedbackEntry[]
-): Promise<{ themes: Theme[]; featureRequests: FeatureRequest[] }> {
+): Promise<{ themeQuotes: Record<string, string[]>; featureRequests: FeatureRequest[] }> {
+  // Group entries by theme for quote extraction
+  const themeMap: Record<string, string[]> = {};
+  allEntries.forEach((e) => {
+    e.themes.forEach((t) => {
+      if (!themeMap[t]) themeMap[t] = [];
+      themeMap[t].push(e.text);
+    });
+  });
+
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: MODEL_FAST,
     max_tokens: 4096,
     messages: [
       {
@@ -212,10 +228,7 @@ async function extractQuotesAndRequests(
 
 Theme data:
 ${JSON.stringify(
-  themes.map((t) => ({
-    name: t.name,
-    entries: t.entries.map((e) => e.text),
-  }))
+  Object.entries(themeMap).map(([name, entries]) => ({ name, entries }))
 )}
 
 All entries marked as feature requests:
@@ -243,13 +256,17 @@ Return ONLY the JSON, no other text.`,
   if (!jsonMatch) throw new Error('Failed to extract quotes');
 
   const result = JSON.parse(jsonMatch[0]);
+  return { themeQuotes: result.themeQuotes || {}, featureRequests: result.featureRequests || [] };
+}
 
-  // Attach quotes to themes
-  themes.forEach((t) => {
-    t.quotes = result.themeQuotes[t.name] || t.entries.slice(0, 2).map((e) => e.text);
-  });
-
-  return { themes, featureRequests: result.featureRequests || [] };
+function mergeQuotesIntoThemes(
+  themes: Theme[],
+  themeQuotes: Record<string, string[]>
+): Theme[] {
+  return themes.map((t) => ({
+    ...t,
+    quotes: themeQuotes[t.name] || t.entries.slice(0, 2).map((e) => e.text),
+  }));
 }
 
 async function synthesize(
@@ -257,7 +274,7 @@ async function synthesize(
   data: { themes: Theme[]; featureRequests: FeatureRequest[] }
 ): Promise<AnalysisReport> {
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: MODEL_SMART,
     max_tokens: 2048,
     messages: [
       {
