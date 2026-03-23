@@ -6,8 +6,42 @@ import type { AnalysisReport, PartialReport, FeedbackEntry, Theme, FeatureReques
 const MODEL_FAST = 'claude-haiku-4-5-20251001';
 const MODEL_SMART = 'claude-sonnet-4-20250514';
 
+const MAX_RETRIES = 2;
+const RETRY_BASE_DELAY_MS = 1000;
+
 function createClient(apiKey: string): Anthropic {
   return new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+}
+
+function isRetryable(err: unknown): boolean {
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase();
+    // Retry on rate limits, server errors, network issues, and overload
+    if (msg.includes('rate limit') || msg.includes('429')) return true;
+    if (msg.includes('500') || msg.includes('502') || msg.includes('503')) return true;
+    if (msg.includes('overloaded') || msg.includes('capacity')) return true;
+    if (msg.includes('network') || msg.includes('timeout') || msg.includes('fetch')) return true;
+  }
+  return false;
+}
+
+async function withRetry<T>(stepName: string, fn: () => Promise<T>): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      if (attempt < MAX_RETRIES && isRetryable(err)) {
+        const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
+      }
+      break;
+    }
+  }
+  const message = lastError instanceof Error ? lastError.message : 'Unknown error';
+  throw new Error(`Pipeline failed at "${stepName}": ${message}`);
 }
 
 export async function runPipeline(
@@ -20,17 +54,21 @@ export async function runPipeline(
 
   // Step 1: Ingest & Clean
   onStep('ingesting');
-  const entries = await ingestAndClean(client, rawText);
+  const entries = await withRetry('Parsing entries', () =>
+    ingestAndClean(client, rawText)
+  );
 
   // Step 2: Classify & Cluster
   onStep('clustering');
-  const clustered = await classifyAndCluster(client, entries);
+  const clustered = await withRetry('Clustering themes', () =>
+    classifyAndCluster(client, entries)
+  );
 
   // Steps 3 & 4 run in parallel — they both depend on step 2 but not each other
   onStep('scoring');
   const [scored, extractResult] = await Promise.all([
-    scoreAndRank(client, clustered),
-    extractQuotesAndRequests(client, clustered.entries),
+    withRetry('Scoring & ranking', () => scoreAndRank(client, clustered)),
+    withRetry('Extracting quotes', () => extractQuotesAndRequests(client, clustered.entries)),
   ]);
 
   // Merge quotes from step 4 into scored themes from step 3
@@ -47,7 +85,9 @@ export async function runPipeline(
 
   // Step 5: Synthesize
   onStep('synthesizing');
-  const report = await synthesize(client, { themes: mergedThemes, featureRequests: extractResult.featureRequests });
+  const report = await withRetry('Synthesizing report', () =>
+    synthesize(client, { themes: mergedThemes, featureRequests: extractResult.featureRequests })
+  );
 
   onStep('complete');
   return report;
