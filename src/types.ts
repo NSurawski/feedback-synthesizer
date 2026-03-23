@@ -34,6 +34,12 @@ export interface AnalysisReport {
   analyzedAt: string;
 }
 
+export interface PartialReport {
+  themes?: Theme[];
+  featureRequests?: FeatureRequest[];
+  totalEntries?: number;
+}
+
 export type PipelineStep =
   | 'idle'
   | 'ingesting'

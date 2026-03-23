@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { MessageSquareText, Sparkles, ChevronDown, ChevronUp, Quote, Lightbulb, BarChart3, Key, AlertCircle, CheckCircle2, Loader2, ClipboardList, Zap, Search, FileText, ArrowRight } from 'lucide-react';
-import type { AnalysisReport, PipelineStep, Theme } from './types';
+import type { AnalysisReport, PartialReport, PipelineStep, Theme } from './types';
 import { runPipeline } from './pipeline';
 import { sampleFeedback } from './sampleData';
 
@@ -262,6 +262,7 @@ export default function App() {
   const [feedback, setFeedback] = useState('');
   const [pipelineStep, setPipelineStep] = useState<PipelineStep>('idle');
   const [report, setReport] = useState<AnalysisReport | null>(null);
+  const [partialReport, setPartialReport] = useState<PartialReport | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleApiKeyChange = useCallback((key: string) => {
@@ -281,12 +282,17 @@ export default function App() {
 
     setError(null);
     setReport(null);
+    setPartialReport(null);
 
     try {
-      const result = await runPipeline(feedback, apiKey, (step) => {
-        setPipelineStep(step as PipelineStep);
-      });
+      const result = await runPipeline(
+        feedback,
+        apiKey,
+        (step) => setPipelineStep(step as PipelineStep),
+        (partial) => setPartialReport(partial)
+      );
       setReport(result);
+      setPartialReport(null);
     } catch (err) {
       setPipelineStep('error');
       setError(err instanceof Error ? err.message : 'Analysis failed. Please try again.');
@@ -300,6 +306,7 @@ export default function App() {
   const handleReset = useCallback(() => {
     setFeedback('');
     setReport(null);
+    setPartialReport(null);
     setPipelineStep('idle');
     setError(null);
   }, []);
@@ -423,14 +430,68 @@ export default function App() {
 
         {/* Pipeline Running */}
         {pipelineStep !== 'idle' && pipelineStep !== 'complete' && pipelineStep !== 'error' && (
-          <div className="rounded-xl border border-gray-200 bg-white p-6">
-            <h2 className="mb-2 text-center font-semibold text-gray-900">
-              Analyzing your feedback...
-            </h2>
-            <p className="mb-4 text-center text-sm text-gray-500">
-              The AI agent is working through {entryCount} entries in 5 autonomous steps.
-            </p>
-            <PipelineProgress currentStep={pipelineStep} />
+          <div className="space-y-6">
+            <div className="rounded-xl border border-gray-200 bg-white p-6">
+              <h2 className="mb-2 text-center font-semibold text-gray-900">
+                Analyzing your feedback...
+              </h2>
+              <p className="mb-4 text-center text-sm text-gray-500">
+                The AI agent is working through {entryCount} entries in 5 autonomous steps.
+              </p>
+              <PipelineProgress currentStep={pipelineStep} />
+            </div>
+
+            {/* Progressive results — show themes and feature requests while synthesis runs */}
+            {partialReport?.themes && (
+              <div className="animate-fadeIn space-y-8">
+                <div>
+                  <h2 className="mb-4 text-lg font-bold text-gray-900">
+                    Themes ({partialReport.themes.length})
+                  </h2>
+                  <div className="space-y-4">
+                    {partialReport.themes.map((theme, i) => (
+                      <ThemeCard key={theme.name} theme={theme} rank={i + 1} />
+                    ))}
+                  </div>
+                </div>
+
+                {partialReport.featureRequests && partialReport.featureRequests.length > 0 && (
+                  <div>
+                    <div className="mb-4 flex items-center gap-2">
+                      <Zap size={20} className="text-amber-500" />
+                      <h2 className="text-lg font-bold text-gray-900">
+                        Feature Requests ({partialReport.featureRequests.length})
+                      </h2>
+                    </div>
+                    <div className="space-y-3">
+                      {partialReport.featureRequests.map((req, i) => (
+                        <div
+                          key={i}
+                          className="flex items-start justify-between rounded-lg border border-gray-200 bg-white p-4"
+                        >
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">{req.description}</p>
+                            {req.quotes.length > 0 && (
+                              <p className="mt-1 text-sm italic text-gray-500">
+                                "{req.quotes[0]}"
+                              </p>
+                            )}
+                          </div>
+                          <span className="ml-4 shrink-0 rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700">
+                            {req.count}x
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+                  <Loader2 size={16} className="animate-spin" />
+                  Generating executive summary...
+                </div>
+              </div>
+            )}
           </div>
         )}
 

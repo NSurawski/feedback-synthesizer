@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { AnalysisReport, FeedbackEntry, Theme, FeatureRequest } from './types';
+import type { AnalysisReport, PartialReport, FeedbackEntry, Theme, FeatureRequest } from './types';
 
 // Model tiering: use cheaper/faster Haiku for simple parsing tasks,
 // Sonnet for complex reasoning (clustering, scoring, synthesis)
@@ -13,7 +13,8 @@ function createClient(apiKey: string): Anthropic {
 export async function runPipeline(
   rawText: string,
   apiKey: string,
-  onStep: (step: string) => void
+  onStep: (step: string) => void,
+  onPartialResult?: (partial: PartialReport) => void
 ): Promise<AnalysisReport> {
   const client = createClient(apiKey);
 
@@ -35,6 +36,14 @@ export async function runPipeline(
   // Merge quotes from step 4 into scored themes from step 3
   onStep('extracting');
   const mergedThemes = mergeQuotesIntoThemes(scored, extractResult.themeQuotes);
+
+  // Emit partial results — themes and feature requests are ready, summary is pending
+  const totalEntries = new Set(mergedThemes.flatMap((t) => t.entries.map((e) => e.id))).size;
+  onPartialResult?.({
+    themes: mergedThemes,
+    featureRequests: extractResult.featureRequests,
+    totalEntries,
+  });
 
   // Step 5: Synthesize
   onStep('synthesizing');
