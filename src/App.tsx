@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { MessageSquareText, Sparkles, Key, AlertCircle, Loader2 } from 'lucide-react';
+import { MessageSquareText, Sparkles, Key, AlertCircle, Loader2, Clock, Trash2 } from 'lucide-react';
 import type { AnalysisReport, PartialReport, PipelineStep } from './types';
 import { runPipeline } from './pipeline';
 import { sampleFeedback } from './sampleData';
@@ -7,6 +7,7 @@ import { PIPELINE_STEPS, PipelineProgress } from './components/PipelineProgress'
 import { ThemeCard } from './components/ThemeCard';
 import { FeatureRequestList } from './components/FeatureRequestList';
 import { Report } from './components/Report';
+import { getSavedReports, saveReport, deleteReport, type SavedReport } from './reportHistory';
 
 export default function App() {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('feedback-synth-key') || '');
@@ -15,6 +16,7 @@ export default function App() {
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [partialReport, setPartialReport] = useState<PartialReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [savedReports, setSavedReports] = useState<SavedReport[]>(() => getSavedReports());
 
   const handleApiKeyChange = useCallback((key: string) => {
     setApiKey(key);
@@ -44,6 +46,8 @@ export default function App() {
       );
       setReport(result);
       setPartialReport(null);
+      saveReport(result, feedback);
+      setSavedReports(getSavedReports());
     } catch (err) {
       setPipelineStep('error');
       setError(err instanceof Error ? err.message : 'Analysis failed. Please try again.');
@@ -60,6 +64,17 @@ export default function App() {
     setPartialReport(null);
     setPipelineStep('idle');
     setError(null);
+  }, []);
+
+  const handleViewSavedReport = useCallback((saved: SavedReport) => {
+    setReport(saved.report);
+    setPipelineStep('complete');
+    setError(null);
+  }, []);
+
+  const handleDeleteReport = useCallback((id: string) => {
+    deleteReport(id);
+    setSavedReports(getSavedReports());
   }, []);
 
   const entryCount = feedback
@@ -176,6 +191,47 @@ export default function App() {
                 your feedback.
               </p>
             </div>
+
+            {/* Recent Reports */}
+            {savedReports.length > 0 && (
+              <div className="mt-8 rounded-xl border border-gray-200 bg-white p-6">
+                <div className="mb-4 flex items-center gap-2">
+                  <Clock size={16} className="text-gray-400" />
+                  <h3 className="font-semibold text-gray-900">Recent Reports</h3>
+                </div>
+                <div className="space-y-2">
+                  {savedReports.map((saved) => (
+                    <div
+                      key={saved.id}
+                      className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-3"
+                    >
+                      <button
+                        onClick={() => handleViewSavedReport(saved)}
+                        className="flex-1 text-left"
+                      >
+                        <p className="text-sm font-medium text-gray-800">
+                          {saved.report.themes.length} themes · {saved.report.totalEntries} entries
+                        </p>
+                        <p className="text-xs text-gray-500 truncate max-w-md">
+                          {saved.feedbackPreview}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {new Date(saved.savedAt).toLocaleDateString()} at{' '}
+                          {new Date(saved.savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteReport(saved.id)}
+                        className="ml-3 shrink-0 rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                        title="Delete report"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
 
