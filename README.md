@@ -24,14 +24,18 @@ I designed this tool as a **multi-step agentic AI workflow** rather than a simpl
 Even as a self-initiated project, this synthesizer demonstrates how agentic AI can:
 - Reduce the time needed to process qualitative feedback from hours to minutes  
 - Highlight patterns and recurring themes that might be missed manually  
-- Provide PMs with structured insights that support prioritization decisions
-- A PM could use this after a survey or support ticket dump to quickly identify patterns and prioritize next steps.
+- Provide PMs with structured insights that support prioritization decisions  
 
 **Key learning:**  
 Effective PM solutions don’t just automate tasks—they also improve clarity and decision confidence. Designing autonomous workflows requires careful tradeoffs between accuracy, autonomy, and interpretability.
 
-# React + TypeScript + Vite
+**Real-world PM use case:**  
+A PM could use this tool after collecting survey responses or support tickets to quickly identify patterns and prioritize next steps, making decisions faster and more confidently.
 
+## Tech Stack
+- **Frontend:** React + TypeScript + Vite  
+- **AI:** OpenAI GPT / LangChain  
+- **Styling:** Tailwind CSS  
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
