@@ -1,3 +1,34 @@
+# Agentic AI User Feedback Synthesizer
+
+## Problem & Product Insight
+Product Managers often spend hours manually reading qualitative user feedback from surveys, support tickets, or reviews. This process is:
+- Time-consuming and inconsistent  
+- Difficult to prioritize which issues or features matter most  
+- Prone to human bias, making product decisions less confident  
+
+This project explores how an autonomous AI workflow can structure and summarize feedback, helping PMs quickly extract actionable insights and prioritize effectively.
+
+## Approach & Decision Making
+I designed this tool as a **multi-step agentic AI workflow** rather than a simple summarizer, so that it could autonomously:
+1. Cluster similar feedback into meaningful themes  
+2. Extract key insights and recurring pain points  
+3. Analyze sentiment to understand overall user perception  
+4. Produce a structured output ready for decision-making  
+
+**Tradeoffs considered:**
+- Clustering sometimes over-generalizes distinct feedback  
+- Human-in-the-loop validation could improve accuracy but wasn’t included in this self-initiated project  
+- Prioritized clarity and workflow autonomy over full integration with live data sources  
+
+## Impact & Learnings
+Even as a self-initiated project, this synthesizer demonstrates how agentic AI can:
+- Reduce the time needed to process qualitative feedback from hours to minutes  
+- Highlight patterns and recurring themes that might be missed manually  
+- Provide PMs with structured insights that support prioritization decisions  
+
+**Key learning:**  
+Effective PM solutions don’t just automate tasks—they also improve clarity and decision confidence. Designing autonomous workflows requires careful tradeoffs between accuracy, autonomy, and interpretability.
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
