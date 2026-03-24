@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { MessageSquareText, Sparkles, Key, AlertCircle, Loader2, Clock, Trash2 } from 'lucide-react';
+import { MessageSquareText, Sparkles, Key, AlertCircle, Loader2, Clock, Trash2, Sun, Moon } from 'lucide-react';
 import type { AnalysisReport, PartialReport, PipelineStep } from './types';
 import { runPipeline } from './pipeline';
 import { sampleFeedback } from './sampleData';
@@ -8,8 +8,10 @@ import { ThemeCard } from './components/ThemeCard';
 import { FeatureRequestList } from './components/FeatureRequestList';
 import { Report } from './components/Report';
 import { getSavedReports, saveReport, deleteReport, type SavedReport } from './reportHistory';
+import { useTheme } from './useTheme';
 
 export default function App() {
+  const { theme, toggleTheme } = useTheme();
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('feedback-synth-key') || '');
   const [feedback, setFeedback] = useState('');
   const [pipelineStep, setPipelineStep] = useState<PipelineStep>('idle');
@@ -82,43 +84,52 @@ export default function App() {
     .filter((line) => line.trim().length > 0).length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white">
+      <header className="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600">
               <MessageSquareText size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">Feedback Synthesizer</h1>
-              <p className="text-xs text-gray-500">Agentic AI feedback analysis</p>
+              <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">Feedback Synthesizer</h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Agentic AI feedback analysis</p>
             </div>
           </div>
-          <a
-            href="https://nsurawski.github.io/PM-Portfolio/"
-            className="text-sm text-blue-600 hover:text-blue-800"
-          >
-            &larr; Portfolio
-          </a>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <a
+              href="https://nsurawski.github.io/PM-Portfolio/"
+              className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              &larr; Portfolio
+            </a>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-4xl px-6 py-8">
         {/* API Key */}
-        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4">
+        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
           <div className="flex items-center gap-2 mb-2">
-            <Key size={16} className="text-gray-400" />
-            <label className="text-sm font-medium text-gray-700">Anthropic API Key</label>
+            <Key size={16} className="text-gray-400 dark:text-gray-500" />
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Anthropic API Key</label>
           </div>
           <input
             type="password"
             value={apiKey}
             onChange={(e) => handleApiKeyChange(e.target.value)}
             placeholder="sk-ant-..."
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
           />
-          <p className="mt-1 text-xs text-gray-400">
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
             Your key is stored locally and never sent to any server except Anthropic's API.
           </p>
         </div>
@@ -127,12 +138,12 @@ export default function App() {
         {!report && pipelineStep === 'idle' && (
           <>
             {/* Feedback Input */}
-            <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6">
+            <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="font-semibold text-gray-900">Paste your feedback</h2>
+                <h2 className="font-semibold text-gray-900 dark:text-gray-100">Paste your feedback</h2>
                 <button
                   onClick={handleLoadSample}
-                  className="flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-200"
+                  className="flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
                 >
                   <Sparkles size={14} />
                   Try with sample data
@@ -143,10 +154,10 @@ export default function App() {
                 onChange={(e) => setFeedback(e.target.value)}
                 placeholder="Paste support tickets, app reviews, survey responses, or interview notes here. One entry per line works best."
                 rows={12}
-                className="w-full resize-y rounded-lg border border-gray-200 px-4 py-3 text-sm leading-relaxed text-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full resize-y rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm leading-relaxed text-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:placeholder:text-gray-500"
               />
               {entryCount > 0 && (
-                <p className="mt-2 text-sm text-gray-500">
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                   {entryCount} {entryCount === 1 ? 'entry' : 'entries'} detected
                 </p>
               )}
@@ -154,7 +165,7 @@ export default function App() {
 
             {/* Error */}
             {error && (
-              <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
                 <AlertCircle size={16} />
                 {error}
               </div>
@@ -164,29 +175,29 @@ export default function App() {
             <button
               onClick={handleAnalyze}
               disabled={!feedback.trim() || !apiKey.trim()}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 dark:disabled:bg-gray-700 dark:disabled:text-gray-500"
             >
               <Sparkles size={18} />
               Analyze Feedback
             </button>
 
             {/* How it works */}
-            <div className="mt-8 rounded-xl border border-gray-200 bg-white p-6">
-              <h3 className="mb-4 font-semibold text-gray-900">How it works</h3>
+            <div className="mt-8 rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
+              <h3 className="mb-4 font-semibold text-gray-900 dark:text-gray-100">How it works</h3>
               <div className="grid gap-4 sm:grid-cols-5">
                 {PIPELINE_STEPS.map((step) => {
                   const Icon = step.icon;
                   return (
                     <div key={step.key} className="text-center">
-                      <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-50">
-                        <Icon size={18} className="text-blue-600" />
+                      <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-950">
+                        <Icon size={18} className="text-blue-600 dark:text-blue-400" />
                       </div>
-                      <p className="text-xs font-medium text-gray-700">{step.label}</p>
+                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{step.label}</p>
                     </div>
                   );
                 })}
               </div>
-              <p className="mt-4 text-center text-xs text-gray-400">
+              <p className="mt-4 text-center text-xs text-gray-400 dark:text-gray-500">
                 Each step is a separate AI agent call — the pipeline thinks autonomously through
                 your feedback.
               </p>
@@ -194,35 +205,35 @@ export default function App() {
 
             {/* Recent Reports */}
             {savedReports.length > 0 && (
-              <div className="mt-8 rounded-xl border border-gray-200 bg-white p-6">
+              <div className="mt-8 rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
                 <div className="mb-4 flex items-center gap-2">
-                  <Clock size={16} className="text-gray-400" />
-                  <h3 className="font-semibold text-gray-900">Recent Reports</h3>
+                  <Clock size={16} className="text-gray-400 dark:text-gray-500" />
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">Recent Reports</h3>
                 </div>
                 <div className="space-y-2">
                   {savedReports.map((saved) => (
                     <div
                       key={saved.id}
-                      className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-3"
+                      className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"
                     >
                       <button
                         onClick={() => handleViewSavedReport(saved)}
                         className="flex-1 text-left"
                       >
-                        <p className="text-sm font-medium text-gray-800">
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
                           {saved.report.themes.length} themes · {saved.report.totalEntries} entries
                         </p>
-                        <p className="text-xs text-gray-500 truncate max-w-md">
+                        <p className="text-xs text-gray-500 truncate max-w-md dark:text-gray-400">
                           {saved.feedbackPreview}
                         </p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-gray-400 dark:text-gray-500">
                           {new Date(saved.savedAt).toLocaleDateString()} at{' '}
                           {new Date(saved.savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </button>
                       <button
                         onClick={() => handleDeleteReport(saved.id)}
-                        className="ml-3 shrink-0 rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                        className="ml-3 shrink-0 rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:text-gray-500 dark:hover:bg-red-950 dark:hover:text-red-400"
                         title="Delete report"
                       >
                         <Trash2 size={14} />
@@ -238,11 +249,11 @@ export default function App() {
         {/* Pipeline Running */}
         {pipelineStep !== 'idle' && pipelineStep !== 'complete' && pipelineStep !== 'error' && (
           <div className="space-y-6">
-            <div className="rounded-xl border border-gray-200 bg-white p-6">
-              <h2 className="mb-2 text-center font-semibold text-gray-900">
+            <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
+              <h2 className="mb-2 text-center font-semibold text-gray-900 dark:text-gray-100">
                 Analyzing your feedback...
               </h2>
-              <p className="mb-4 text-center text-sm text-gray-500">
+              <p className="mb-4 text-center text-sm text-gray-500 dark:text-gray-400">
                 The AI agent is working through {entryCount} entries in 5 autonomous steps.
               </p>
               <PipelineProgress currentStep={pipelineStep} />
@@ -252,7 +263,7 @@ export default function App() {
             {partialReport?.themes && (
               <div className="animate-fadeIn space-y-8">
                 <div>
-                  <h2 className="mb-4 text-lg font-bold text-gray-900">
+                  <h2 className="mb-4 text-lg font-bold text-gray-900 dark:text-gray-100">
                     Themes ({partialReport.themes.length})
                   </h2>
                   <div className="space-y-4">
@@ -266,7 +277,7 @@ export default function App() {
                   <FeatureRequestList requests={partialReport.featureRequests} />
                 )}
 
-                <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+                <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300">
                   <Loader2 size={16} className="animate-spin" />
                   Generating executive summary...
                 </div>
@@ -278,13 +289,13 @@ export default function App() {
         {/* Error during pipeline */}
         {pipelineStep === 'error' && error && (
           <div className="space-y-4">
-            <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
               <AlertCircle size={16} />
               {error}
             </div>
             <button
               onClick={handleReset}
-              className="w-full rounded-xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              className="w-full rounded-xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               Try Again
             </button>
@@ -297,7 +308,7 @@ export default function App() {
             <Report report={report} />
             <button
               onClick={handleReset}
-              className="w-full rounded-xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              className="w-full rounded-xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               Analyze New Feedback
             </button>
@@ -306,9 +317,9 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white py-6 text-center text-xs text-gray-400">
+      <footer className="border-t border-gray-200 bg-white py-6 text-center text-xs text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-500">
         Built by Nicole Surawski · Powered by Claude API ·{' '}
-        <a href="https://nsurawski.github.io/PM-Portfolio/" className="text-blue-500 hover:text-blue-700">
+        <a href="https://nsurawski.github.io/PM-Portfolio/" className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
           View Portfolio
         </a>
       </footer>

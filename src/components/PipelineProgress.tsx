@@ -32,7 +32,7 @@ export function PipelineProgress({ currentStep }: { currentStep: PipelineStep })
                     ? 'bg-emerald-500 text-white'
                     : isCurrent
                       ? 'animate-pulse bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-400'
+                      : 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500'
                 }`}
               >
                 {isComplete ? (
@@ -46,10 +46,10 @@ export function PipelineProgress({ currentStep }: { currentStep: PipelineStep })
               <span
                 className={`text-xs font-medium ${
                   isComplete
-                    ? 'text-emerald-600'
+                    ? 'text-emerald-600 dark:text-emerald-400'
                     : isCurrent
-                      ? 'text-blue-600'
-                      : 'text-gray-400'
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-gray-400 dark:text-gray-500'
                 }`}
               >
                 {step.label}
@@ -59,7 +59,7 @@ export function PipelineProgress({ currentStep }: { currentStep: PipelineStep })
         })}
       </div>
       {/* Connecting line */}
-      <div className="relative mx-6 -mt-[3.25rem] mb-8 h-0.5 bg-gray-200">
+      <div className="relative mx-6 -mt-[3.25rem] mb-8 h-0.5 bg-gray-200 dark:bg-gray-700">
         <div
           className="absolute left-0 top-0 h-full bg-emerald-500 transition-all duration-700"
           style={{
