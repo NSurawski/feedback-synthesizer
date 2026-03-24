@@ -24,7 +24,8 @@ I designed this tool as a **multi-step agentic AI workflow** rather than a simpl
 Even as a self-initiated project, this synthesizer demonstrates how agentic AI can:
 - Reduce the time needed to process qualitative feedback from hours to minutes  
 - Highlight patterns and recurring themes that might be missed manually  
-- Provide PMs with structured insights that support prioritization decisions  
+- Provide PMs with structured insights that support prioritization decisions
+- A PM could use this after a survey or support ticket dump to quickly identify patterns and prioritize next steps.
 
 **Key learning:**  
 Effective PM solutions don’t just automate tasks—they also improve clarity and decision confidence. Designing autonomous workflows requires careful tradeoffs between accuracy, autonomy, and interpretability.
