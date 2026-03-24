@@ -36,12 +36,43 @@ A PM could use this tool after collecting survey responses or support tickets to
 - **Frontend:** React + TypeScript + Vite  
 - **AI:** OpenAI GPT / LangChain  
 - **Styling:** Tailwind CSS  
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Installation
+1. Clone the repository  
+```bash
+git clone https://github.com/NSurawski/feedback-synthesizer.git
+2. Navigate to the project folder:
+cd feedback-synthesizer
+3. Install Dependencies:
+npm install
+4. Run the development server:
+npm run dev
+
+Usage
+Open your browser at http://localhost:5173 (or as directed in your terminal)
+Paste or upload raw qualitative user feedback
+Click “Analyze Feedback”
+View structured themes, sentiment, and prioritized insights
+
+How It Works
+
+The synthesizer runs as a multi-step agentic AI workflow:
+
+Input: Accepts raw qualitative feedback
+Theme Clustering: Groups similar feedback into coherent themes
+Insight Extraction: Identifies key patterns, recurring pain points, and actionable insights
+Sentiment Analysis: Determines overall tone (positive, neutral, negative)
+Structured Output: Provides a clean, organized summary ready for PM decision-making
+
+Limitations & Next Steps
+Clustering can sometimes over-generalize distinct feedback
+No human-in-the-loop validation yet
+Future improvements: adjustable clustering sensitivity, feedback tagging/filtering, integration with live data sources (Zendesk, Intercom, etc.)
+Author
+
+Built by Nicole Surawski as part of my transition into Product Management.
 
 ## React Compiler
 
