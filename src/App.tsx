@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { MessageSquareText, Sparkles, Key, AlertCircle, Loader2, Clock, Trash2, Sun, Moon } from 'lucide-react';
+import { MessageSquareText, Sparkles, Key, AlertCircle, Loader2, Clock, Trash2, Sun, Moon, Play } from 'lucide-react';
 import type { AnalysisReport, PartialReport, PipelineStep } from './types';
 import { runPipeline } from './pipeline';
 import { sampleFeedback } from './sampleData';
@@ -9,6 +9,7 @@ import { FeatureRequestList } from './components/FeatureRequestList';
 import { Report } from './components/Report';
 import { getSavedReports, saveReport, deleteReport, type SavedReport } from './reportHistory';
 import { useTheme } from './useTheme';
+import { demoReport } from './demoReport';
 
 export default function App() {
   const { theme, toggleTheme } = useTheme();
@@ -79,6 +80,12 @@ export default function App() {
     setSavedReports(getSavedReports());
   }, []);
 
+  const handleViewDemo = useCallback(() => {
+    setReport(demoReport);
+    setPipelineStep('complete');
+    setError(null);
+  }, []);
+
   const entryCount = feedback
     .split('\n')
     .filter((line) => line.trim().length > 0).length;
@@ -116,27 +123,56 @@ export default function App() {
       </header>
 
       <main className="mx-auto max-w-4xl px-6 py-8">
-        {/* API Key */}
-        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
-          <div className="flex items-center gap-2 mb-2">
-            <Key size={16} className="text-gray-400 dark:text-gray-500" />
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Anthropic API Key</label>
-          </div>
-          <input
-            type="password"
-            value={apiKey}
-            onChange={(e) => handleApiKeyChange(e.target.value)}
-            placeholder="sk-ant-..."
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
-          />
-          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-            Your key is stored locally and never sent to any server except Anthropic's API.
-          </p>
-        </div>
-
         {/* Input or Report */}
         {!report && pipelineStep === 'idle' && (
           <>
+            {/* Demo CTA */}
+            <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-5 dark:border-blue-800 dark:bg-blue-950">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="font-semibold text-gray-900 dark:text-gray-100">See it in action</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    View a pre-analyzed report from 30 sample feedback entries — no API key needed.
+                  </p>
+                </div>
+                <button
+                  onClick={handleViewDemo}
+                  className="flex shrink-0 items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                >
+                  <Play size={16} />
+                  View Demo Report
+                </button>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200 dark:border-gray-700" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-gray-50 px-3 text-gray-400 dark:bg-gray-950 dark:text-gray-500">or analyze your own feedback</span>
+              </div>
+            </div>
+
+            {/* API Key */}
+            <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+              <div className="flex items-center gap-2 mb-2">
+                <Key size={16} className="text-gray-400 dark:text-gray-500" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Anthropic API Key</label>
+              </div>
+              <input
+                type="password"
+                value={apiKey}
+                onChange={(e) => handleApiKeyChange(e.target.value)}
+                placeholder="sk-ant-..."
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
+              />
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                Your key is stored locally and never sent to any server except Anthropic's API.
+              </p>
+            </div>
+
             {/* Feedback Input */}
             <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
               <div className="mb-3 flex items-center justify-between">
