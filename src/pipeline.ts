@@ -13,7 +13,7 @@ function createClient(apiKey: string): Anthropic {
   return new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
 }
 
-function isRetryable(err: unknown): boolean {
+export function isRetryable(err: unknown): boolean {
   if (err instanceof Error) {
     const msg = err.message.toLowerCase();
     // Retry on rate limits, server errors, network issues, and overload
@@ -25,7 +25,7 @@ function isRetryable(err: unknown): boolean {
   return false;
 }
 
-async function withRetry<T>(stepName: string, fn: () => Promise<T>): Promise<T> {
+export async function withRetry<T>(stepName: string, fn: () => Promise<T>): Promise<T> {
   let lastError: unknown;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
