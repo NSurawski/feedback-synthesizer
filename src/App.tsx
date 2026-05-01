@@ -188,6 +188,12 @@ export default function App() {
               <textarea
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    if (feedback.trim() && apiKey.trim()) handleAnalyze();
+                  }
+                }}
                 placeholder="Paste support tickets, app reviews, survey responses, or interview notes here. One entry per line works best."
                 rows={12}
                 className="w-full resize-y rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm leading-relaxed text-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:placeholder:text-gray-500"
@@ -215,6 +221,7 @@ export default function App() {
             >
               <Sparkles size={18} />
               Analyze Feedback
+              <kbd className="ml-1 rounded border border-blue-400/40 bg-blue-700/40 px-1.5 py-0.5 text-[10px] font-mono font-medium">⌘↵</kbd>
             </button>
 
             {/* How it works */}
