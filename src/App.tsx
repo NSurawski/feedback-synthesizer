@@ -11,9 +11,28 @@ import { getSavedReports, saveReport, deleteReport, type SavedReport } from './r
 import { useTheme } from './useTheme';
 import { demoReport } from './demoReport';
 
+function maskApiKey(key: string): string {
+  if (key.length <= 11) return key.slice(0, 3) + '•'.repeat(key.length - 3);
+  return `${key.slice(0, 7)}...${key.slice(-4)}`;
+}
+
+function estimateCost(entries: number): string {
+  // Haiku 4.5: $0.80/MTok in, $4.00/MTok out
+  // Sonnet 4: ~$3/MTok in, ~$15/MTok out
+  // 2 Haiku calls (ingest + extract), 3 Sonnet calls (cluster + score + synthesize)
+  const haikuIn  = (2000 + entries * 50)  * 0.80  / 1_000_000;
+  const haikuOut = (400  + entries * 30)  * 4.00  / 1_000_000;
+  const sonnetIn  = (3000 + entries * 80) * 3.00  / 1_000_000;
+  const sonnetOut = (1600 + entries * 30) * 15.00 / 1_000_000;
+  const total = haikuIn + haikuOut + sonnetIn + sonnetOut;
+  if (total < 0.01) return '< $0.01';
+  return `~$${total.toFixed(2)}`;
+}
+
 export default function App() {
   const { theme, toggleTheme } = useTheme();
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('feedback-synth-key') || '');
+  const [isEditingKey, setIsEditingKey] = useState(() => !localStorage.getItem('feedback-synth-key'));
   const [feedback, setFeedback] = useState('');
   const [pipelineStep, setPipelineStep] = useState<PipelineStep>('idle');
   const [report, setReport] = useState<AnalysisReport | null>(null);
@@ -161,13 +180,29 @@ export default function App() {
                 <Key size={16} className="text-gray-400 dark:text-gray-500" />
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Anthropic API Key</label>
               </div>
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => handleApiKeyChange(e.target.value)}
-                placeholder="sk-ant-..."
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
-              />
+              {isEditingKey ? (
+                <input
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => handleApiKeyChange(e.target.value)}
+                  onBlur={() => { if (apiKey.trim()) setIsEditingKey(false); }}
+                  placeholder="sk-ant-..."
+                  autoFocus
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
+                />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-mono text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+                    {maskApiKey(apiKey)}
+                  </span>
+                  <button
+                    onClick={() => setIsEditingKey(true)}
+                    className="shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                  >
+                    Edit key
+                  </button>
+                </div>
+              )}
               <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                 Your key is stored locally and never sent to any server except Anthropic's API.
               </p>
@@ -199,9 +234,14 @@ export default function App() {
                 className="w-full resize-y rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm leading-relaxed text-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:placeholder:text-gray-500"
               />
               {entryCount > 0 && (
-                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  {entryCount} {entryCount === 1 ? 'entry' : 'entries'} detected
-                </p>
+                <div className="mt-2 flex items-center justify-between">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {entryCount} {entryCount === 1 ? 'entry' : 'entries'} detected
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    {estimateCost(entryCount)} estimated
+                  </p>
+                </div>
               )}
             </div>
 
