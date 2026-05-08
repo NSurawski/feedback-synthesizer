@@ -376,12 +376,20 @@ export default function App() {
               <AlertCircle size={16} />
               {error}
             </div>
-            <button
-              onClick={handleReset}
-              className="w-full rounded-xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
-            >
-              Try Again
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={handleAnalyze}
+                className="flex-1 rounded-xl border border-blue-200 bg-blue-50 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400 dark:hover:bg-blue-900"
+              >
+                Retry
+              </button>
+              <button
+                onClick={handleReset}
+                className="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                Start Over
+              </button>
+            </div>
           </div>
         )}
 
