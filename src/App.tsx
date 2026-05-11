@@ -11,6 +11,8 @@ import { getSavedReports, saveReport, deleteReport, type SavedReport } from './r
 import { useTheme } from './useTheme';
 import { demoReport } from './demoReport';
 
+const MAX_CHARS = 20_000;
+
 function maskApiKey(key: string): string {
   if (key.length <= 11) return key.slice(0, 3) + '•'.repeat(key.length - 3);
   return `${key.slice(0, 7)}...${key.slice(-4)}`;
@@ -222,7 +224,7 @@ export default function App() {
               </div>
               <textarea
                 value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
+                onChange={(e) => setFeedback(e.target.value.slice(0, MAX_CHARS))}
                 onKeyDown={(e) => {
                   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
                     e.preventDefault();
@@ -233,16 +235,27 @@ export default function App() {
                 rows={12}
                 className="w-full resize-y rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm leading-relaxed text-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:placeholder:text-gray-500"
               />
-              {entryCount > 0 && (
-                <div className="mt-2 flex items-center justify-between">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {entryCount} {entryCount === 1 ? 'entry' : 'entries'} detected
-                  </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">
-                    {estimateCost(entryCount)} estimated
+              <div className="mt-2 flex items-center justify-between">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {entryCount > 0 ? `${entryCount} ${entryCount === 1 ? 'entry' : 'entries'} detected` : ''}
+                </p>
+                <div className="flex items-center gap-3">
+                  {entryCount > 0 && (
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                      {estimateCost(entryCount)} estimated
+                    </p>
+                  )}
+                  <p className={`text-xs tabular-nums ${
+                    feedback.length >= MAX_CHARS
+                      ? 'font-semibold text-red-500 dark:text-red-400'
+                      : feedback.length >= MAX_CHARS * 0.85
+                      ? 'text-amber-500 dark:text-amber-400'
+                      : 'text-gray-400 dark:text-gray-500'
+                  }`}>
+                    {feedback.length.toLocaleString()} / {MAX_CHARS.toLocaleString()}
                   </p>
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Error */}
@@ -256,7 +269,7 @@ export default function App() {
             {/* Analyze Button */}
             <button
               onClick={handleAnalyze}
-              disabled={!feedback.trim() || !apiKey.trim()}
+              disabled={!feedback.trim() || !apiKey.trim() || feedback.length >= MAX_CHARS}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 dark:disabled:bg-gray-700 dark:disabled:text-gray-500"
             >
               <Sparkles size={18} />
